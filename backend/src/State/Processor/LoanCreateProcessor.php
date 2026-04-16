@@ -28,16 +28,30 @@ class LoanCreateProcessor implements ProcessorInterface
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): mixed
     {
         /** @var LoanCreateInput $data */
-        $member = $this->memberRepository->find($data->memberId);
+        $memberId = $data->memberId ?? '';
+        $isMemberUuid = (bool) preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $memberId);
+
+        if ($isMemberUuid) {
+            $member = $this->memberRepository->find($memberId);
+        } else {
+            // Chercher par numéro d'adhérent (BIB-YYYY-XXXXX)
+            $member = $this->memberRepository->findOneBy(['memberNumber' => $memberId]);
+        }
+
         if ($member === null) {
             throw new NotFoundHttpException('Adhérent introuvable');
         }
 
-        $bookCopy = $this->bookCopyRepository->find($data->bookCopyId);
-        if ($bookCopy === null) {
-            // Essayer par code-barres
-            $bookCopy = $this->bookCopyRepository->findByBarcode($data->bookCopyId ?? '');
+        // Tenter d'abord par code-barres, puis par UUID
+        $bookCopyId = $data->bookCopyId ?? '';
+        $isUuid = (bool) preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $bookCopyId);
+
+        if ($isUuid) {
+            $bookCopy = $this->bookCopyRepository->find($bookCopyId);
+        } else {
+            $bookCopy = $this->bookCopyRepository->findByBarcode($bookCopyId);
         }
+
         if ($bookCopy === null) {
             throw new NotFoundHttpException('Exemplaire introuvable');
         }
