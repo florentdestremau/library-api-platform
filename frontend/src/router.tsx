@@ -8,9 +8,12 @@ const AdminLayout = lazy(() => import('@/components/layout/AdminLayout'))
 const MemberLayout = lazy(() => import('@/components/layout/MemberLayout'))
 const Dashboard = lazy(() => import('@/pages/admin/Dashboard'))
 const BookListAdmin = lazy(() => import('@/pages/admin/Books/BookListAdmin'))
+const BookForm = lazy(() => import('@/pages/admin/Books/BookForm'))
 const LoanCounter = lazy(() => import('@/pages/admin/Loans/LoanCounter'))
 const LoanList = lazy(() => import('@/pages/admin/Loans/LoanList'))
 const MemberList = lazy(() => import('@/pages/admin/Members/MemberList'))
+const MemberDetail = lazy(() => import('@/pages/admin/Members/MemberDetail'))
+const MemberForm = lazy(() => import('@/pages/admin/Members/MemberForm'))
 const BookList = lazy(() => import('@/pages/catalog/BookList'))
 const MyLoans = lazy(() => import('@/pages/member/MyLoans'))
 const MyReservations = lazy(() => import('@/pages/member/MyReservations'))
@@ -61,10 +64,15 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <S component={Dashboard} /> },
       { path: 'books', element: <S component={BookListAdmin} /> },
+      { path: 'books/new', element: <S component={BookForm} /> },
+      { path: 'books/:id/edit', element: <S component={BookForm} /> },
       { path: 'loans', element: <S component={LoanCounter} /> },
       { path: 'loans/list', element: <S component={LoanList} /> },
       { path: 'loans/overdue', element: <S component={LoanList} /> },
       { path: 'members', element: <S component={MemberList} /> },
+      { path: 'members/new', element: <S component={MemberForm} /> },
+      { path: 'members/:id', element: <S component={MemberDetail} /> },
+      { path: 'members/:id/edit', element: <S component={MemberForm} /> },
       {
         path: 'reservations',
         element: (
