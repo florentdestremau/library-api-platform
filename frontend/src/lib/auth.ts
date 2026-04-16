@@ -1,20 +1,38 @@
-// Stockage du token JWT en mémoire (pas localStorage)
-let accessToken: string | null = null
+const TOKEN_COOKIE = 'jwt'
+const TOKEN_TTL_SECONDS = 3600 // correspond à la durée du JWT (1h)
+
+function setCookie(name: string, value: string, maxAge: number): void {
+  const secure = location.protocol === 'https:' ? '; Secure' : ''
+  document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=${maxAge}; Path=/; SameSite=Strict${secure}`
+}
+
+function getCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'))
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+function deleteCookie(name: string): void {
+  document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Strict`
+}
 
 export function getAccessToken(): string | null {
-  return accessToken
+  return getCookie(TOKEN_COOKIE)
 }
 
 export function setAccessToken(token: string | null): void {
-  accessToken = token
+  if (token) {
+    setCookie(TOKEN_COOKIE, token, TOKEN_TTL_SECONDS)
+  } else {
+    deleteCookie(TOKEN_COOKIE)
+  }
 }
 
 export function clearAccessToken(): void {
-  accessToken = null
+  deleteCookie(TOKEN_COOKIE)
 }
 
 export function isAuthenticated(): boolean {
-  return accessToken !== null
+  return getAccessToken() !== null
 }
 
 export interface JwtPayload {
