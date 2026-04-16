@@ -111,34 +111,15 @@ L'application est déployée sur un serveur Once avec Docker.
 
 ### Déploiement initial sur le serveur Once
 
-Le serveur Once utilise **kamal-proxy** pour le routage. Les apps n'exposent pas de ports directement.
-
 ```bash
 ssh ubuntu@ssh.once.florent.cc
 
-# Charger l'image (ou attendre que le CI la push sur GHCR)
-docker pull ghcr.io/florentdestremau/library-api-platform:master
-
-# Lancer le conteneur sur le réseau once
-mkdir -p ~/storage/library-api
-docker run -d \
-  --name library-api-app \
-  --restart unless-stopped \
-  --network once \
-  -v ~/storage/library-api:/storage \
-  -e CORS_ALLOW_ORIGIN='.*' \
-  -e ADMIN_EMAIL=admin@bibliotheque.fr \
-  -e ADMIN_PASSWORD=Admin1234! \
-  ghcr.io/florentdestremau/library-api-platform:master
-
-# Enregistrer dans kamal-proxy
-docker exec once-proxy kamal-proxy deploy library-api \
-  --target library-api-app:80 \
+once deploy ghcr.io/florentdestremau/library-api-platform:master \
   --host library-api.once.florent.cc \
-  --tls \
-  --health-check-path /up
+  --env CORS_ALLOW_ORIGIN='.*' \
+  --env ADMIN_EMAIL=admin@bibliotheque.fr \
+  --env ADMIN_PASSWORD=Admin1234!
 
-# Vérification
 curl https://library-api.once.florent.cc/up
 ```
 
@@ -147,23 +128,7 @@ curl https://library-api.once.florent.cc/up
 ```bash
 ssh ubuntu@ssh.once.florent.cc
 
-# Charger la nouvelle image
-docker pull ghcr.io/florentdestremau/library-api-platform:master
-
-# Arrêter l'ancien et démarrer le nouveau
-docker stop library-api-app && docker rm library-api-app
-docker run -d \
-  --name library-api-app \
-  --restart unless-stopped \
-  --network once \
-  -v ~/storage/library-api:/storage \
-  ghcr.io/florentdestremau/library-api-platform:master
-
-# Redéployer dans kamal-proxy
-docker exec once-proxy kamal-proxy deploy library-api \
-  --target library-api-app:80 \
-  --host library-api.once.florent.cc \
-  --tls
+once update ghcr.io/florentdestremau/library-api-platform:master
 ```
 
 **Note** : Il y a un downtime de quelques secondes pendant le redémarrage (pas de rolling update avec Docker simple). Pour un déploiement sans coupure, utiliser Docker Swarm ou Kubernetes.
