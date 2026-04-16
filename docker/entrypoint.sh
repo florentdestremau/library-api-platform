@@ -6,26 +6,26 @@ DB_PATH="/storage/library.db"
 export DATABASE_URL="sqlite:///${DB_PATH}"
 export APP_RUNTIME="Runtime\\FrankenPhpSymfony\\Runtime"
 
-# Créer le répertoire de stockage
-mkdir -p /storage
-chown www-data:www-data /storage
+# Créer le répertoire de stockage persistant
+mkdir -p /storage/jwt
+chown -R www-data:www-data /storage
 chmod 0755 /storage
 
-# Créer .env.local si absent
-if [ ! -f "/app/backend/.env.local" ]; then
+# Créer .env.local si absent (stocké dans /storage pour persister entre restarts)
+ENV_FILE="/storage/.env.local"
+if [ ! -f "${ENV_FILE}" ]; then
     if [ -z "$APP_SECRET" ]; then
         export APP_SECRET=$(php -r "echo bin2hex(random_bytes(32));")
     fi
-
     PASSPHRASE="${JWT_PASSPHRASE:-$(php -r "echo bin2hex(random_bytes(16));")}";
 
-    cat > /app/backend/.env.local << EOF
+    cat > "${ENV_FILE}" << EOF
 APP_ENV=prod
 APP_SECRET=${APP_SECRET}
 APP_RUNTIME=Runtime\\FrankenPhpSymfony\\Runtime
 DATABASE_URL=${DATABASE_URL}
-JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
-JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
+JWT_SECRET_KEY=/storage/jwt/private.pem
+JWT_PUBLIC_KEY=/storage/jwt/public.pem
 JWT_PASSPHRASE=${PASSPHRASE}
 CORS_ALLOW_ORIGIN=${CORS_ALLOW_ORIGIN:-'^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'}
 MAILER_DSN=${MAILER_DSN:-null://null}
@@ -35,17 +35,18 @@ MESSENGER_TRANSPORT_DSN=doctrine://default?auto_setup=0
 EOF
 fi
 
-# Générer les clés JWT si absentes
-JWT_DIR="/app/backend/config/jwt"
-mkdir -p "${JWT_DIR}"
-if [ ! -f "${JWT_DIR}/private.pem" ]; then
-    echo "Génération des clés JWT..."
-    PASSPHRASE=$(grep JWT_PASSPHRASE /app/backend/.env.local | cut -d= -f2)
-    openssl genrsa -passout "pass:${PASSPHRASE}" -out "${JWT_DIR}/private.pem" 4096
-    openssl rsa -passin "pass:${PASSPHRASE}" -pubout -in "${JWT_DIR}/private.pem" -out "${JWT_DIR}/public.pem"
+# Lier .env.local vers /app/backend
+ln -sf "${ENV_FILE}" /app/backend/.env.local
+
+# Générer les clés JWT dans /storage/jwt si absentes (persistent across restarts)
+if [ ! -f "/storage/jwt/private.pem" ]; then
+    echo "Génération des clés JWT (persistantes)..."
+    PASSPHRASE=$(grep JWT_PASSPHRASE "${ENV_FILE}" | cut -d= -f2)
+    openssl genrsa -passout "pass:${PASSPHRASE}" -out "/storage/jwt/private.pem" 4096
+    openssl rsa -passin "pass:${PASSPHRASE}" -pubout -in "/storage/jwt/private.pem" -out "/storage/jwt/public.pem"
+    chown www-data:www-data /storage/jwt/private.pem /storage/jwt/public.pem
+    chmod 640 /storage/jwt/private.pem
 fi
-chown www-data:www-data "${JWT_DIR}/private.pem" "${JWT_DIR}/public.pem" 2>/dev/null || true
-chmod 640 "${JWT_DIR}/private.pem"
 
 # Permissions cache/log Symfony
 mkdir -p /app/backend/var/cache/prod /app/backend/var/log
