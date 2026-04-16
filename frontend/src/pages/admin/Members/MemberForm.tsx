@@ -20,8 +20,8 @@ const schema = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
   status: z.enum(['active', 'suspended', 'expired', 'archived']),
-  maxLoans: z.coerce.number().int().min(1).max(20),
-  maxReservations: z.coerce.number().int().min(1).max(10),
+  maxLoans: z.string().min(1),
+  maxReservations: z.string().min(1),
 })
 
 type FormData = z.infer<typeof schema>
@@ -47,8 +47,8 @@ export default function MemberForm() {
       phone: '',
       address: '',
       status: 'active',
-      maxLoans: 5,
-      maxReservations: 3,
+      maxLoans: '5',
+      maxReservations: '3',
     },
   })
 
@@ -61,15 +61,21 @@ export default function MemberForm() {
         phone: member.phone ?? '',
         address: member.address ?? '',
         status: member.status,
-        maxLoans: member.maxLoans,
-        maxReservations: member.maxReservations,
+        maxLoans: String(member.maxLoans),
+        maxReservations: String(member.maxReservations),
       })
     }
   }, [member, form])
 
   const mutation = useMutation({
-    mutationFn: (data: FormData) =>
-      isEdit ? updateMember(id!, data) : createMember(data),
+    mutationFn: (data: FormData) => {
+      const payload = {
+        ...data,
+        maxLoans: parseInt(data.maxLoans),
+        maxReservations: parseInt(data.maxReservations),
+      }
+      return isEdit ? updateMember(id!, payload) : createMember(payload)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['members'] })
       toast.success(isEdit ? 'Adhérent modifié' : 'Adhérent créé')
