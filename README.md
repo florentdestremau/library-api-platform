@@ -128,7 +128,7 @@ curl https://library-api.once.florent.cc/up
 ```bash
 ssh ubuntu@ssh.once.florent.cc
 
-once update ghcr.io/florentdestremau/library-api-platform:master
+once update library-api.once.florent.cc --image ghcr.io/florentdestremau/library-api-platform:master
 ```
 
 **Note** : Il y a un downtime de quelques secondes pendant le redémarrage (pas de rolling update avec Docker simple). Pour un déploiement sans coupure, utiliser Docker Swarm ou Kubernetes.

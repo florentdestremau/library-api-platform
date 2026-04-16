@@ -11,16 +11,14 @@ COPY frontend/package.json frontend/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY frontend/ ./
-
 ENV VITE_API_URL=""
 RUN pnpm run build
 
 # ============================================================
-# Stage 2 : Builder PHP — installation des dépendances Symfony
+# Stage 2 : Builder PHP — dépendances Symfony
 # ============================================================
 FROM php:8.4-cli-alpine AS php-builder
 
-# Utiliser install-php-extensions pour un install rapide des extensions
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 RUN chmod +x /usr/local/bin/install-php-extensions && \
     install-php-extensions pdo pdo_sqlite zip intl
@@ -33,22 +31,23 @@ COPY backend/composer.json backend/composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
 
 COPY backend/ ./
-# Supprimer les clés JWT de dev — elles seront régénérées au premier démarrage
+# Supprimer les clés JWT de dev — régénérées au démarrage
 RUN rm -f config/jwt/private.pem config/jwt/public.pem
 RUN composer dump-autoload --optimize --no-dev
 
 # ============================================================
-# Stage 3 : Image finale — PHP-FPM + Nginx
+# Stage 3 : Image finale — FrankenPHP
 # ============================================================
-FROM php:8.4-fpm-alpine AS final
+FROM dunglas/frankenphp:php8.4-alpine AS final
 
+# Extensions PHP
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 RUN chmod +x /usr/local/bin/install-php-extensions && \
     install-php-extensions pdo pdo_sqlite zip intl opcache
 
-RUN apk add --no-cache nginx supervisor openssl su-exec
+RUN apk add --no-cache openssl su-exec
 
-# Configuration OPcache
+# OPcache
 RUN { \
     echo "opcache.enable=1"; \
     echo "opcache.memory_consumption=256"; \
@@ -58,13 +57,17 @@ RUN { \
 
 WORKDIR /app
 
+# Backend Symfony
 COPY --from=php-builder /app/backend ./backend
 
+# Frontend buildé
 RUN mkdir -p /app/backend/public/app
 COPY --from=frontend-builder /app/frontend/dist/ ./backend/public/app/
 
-COPY docker/nginx.conf /etc/nginx/nginx.conf
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Caddyfile
+COPY docker/Caddyfile /app/Caddyfile
+
+# Entrypoint
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

@@ -31,9 +31,13 @@ apiClient.interceptors.response.use(
 )
 
 export function extractCollection<T>(data: unknown): { items: T[]; total: number } {
+  // Tableau JSON direct
+  if (Array.isArray(data)) {
+    return { items: data as T[], total: data.length }
+  }
   if (!data || typeof data !== 'object') return { items: [], total: 0 }
   const d = data as Record<string, unknown>
   const items = (d['hydra:member'] ?? d['member'] ?? []) as T[]
-  const total = (d['hydra:totalItems'] ?? d['totalItems'] ?? 0) as number
+  const total = (d['hydra:totalItems'] ?? d['totalItems'] ?? (items as unknown[]).length) as number
   return { items, total }
 }

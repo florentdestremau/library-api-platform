@@ -1,4 +1,8 @@
 api_platform:
+    mapping:
+        paths:
+            - '%kernel.project_dir%/src/Entity'
+            - '%kernel.project_dir%/src/Dto'
     title: 'Bibliothèque API'
     description: 'API de gestion de bibliothèque municipale'
     version: '1.0.0'

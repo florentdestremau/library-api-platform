@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Entity\Configuration;
+use App\Entity\Member;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -14,7 +15,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-#[AsCommand(name: 'app:create-admin', description: 'Créer l\'utilisateur administrateur')]
+#[AsCommand(name: 'app:create-admin', description: "Créer l'admin et les données initiales")]
 class CreateAdminCommand extends Command
 {
     public function __construct(
@@ -33,30 +34,62 @@ class CreateAdminCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $this->initConfig();
+
         $email = (string) $input->getOption('email');
         $password = (string) $input->getOption('password');
 
-        // Configuration par défaut
-        $this->initConfig();
+        $this->createUser($email, $password, User::ROLE_SUPER_ADMIN, $output, 'Admin');
+        $this->createUser('bibliothecaire@bibliotheque.fr', 'Biblio1234!', User::ROLE_LIBRARIAN, $output, 'Bibliothécaire');
+        $this->createDemoMember('alice.martin@example.com', 'Alice', 'Martin', 'password123', $output);
+        $this->createDemoMember('bob.dupont@example.com', 'Bob', 'Dupont', 'password123', $output);
 
-        $existing = $this->em->getRepository(User::class)->findOneBy(['email' => $email]);
-        if ($existing !== null) {
-            $output->writeln("<comment>Utilisateur déjà existant : {$email}</comment>");
-
-            return Command::SUCCESS;
-        }
-
-        $admin = new User();
-        $admin->setEmail($email);
-        $admin->setRole(User::ROLE_SUPER_ADMIN);
-        $admin->setPasswordHash($this->hasher->hashPassword($admin, $password));
-
-        $this->em->persist($admin);
         $this->em->flush();
-
-        $output->writeln("<info>Admin créé : {$email}</info>");
+        $output->writeln('<info>Initialisation terminée.</info>');
 
         return Command::SUCCESS;
+    }
+
+    private function createUser(string $email, string $password, string $role, OutputInterface $output, string $label): void
+    {
+        if ($this->em->getRepository(User::class)->findOneBy(['email' => $email])) {
+            $output->writeln("<comment>{$label} déjà existant : {$email}</comment>");
+            return;
+        }
+
+        $user = new User();
+        $user->setEmail($email);
+        $user->setRole($role);
+        $user->setPasswordHash($this->hasher->hashPassword($user, $password));
+        $this->em->persist($user);
+        $output->writeln("<info>{$label} créé : {$email}</info>");
+    }
+
+    private function createDemoMember(string $email, string $firstName, string $lastName, string $password, OutputInterface $output): void
+    {
+        if ($this->em->getRepository(User::class)->findOneBy(['email' => $email])) {
+            return;
+        }
+
+        $year = (int) date('Y');
+        static $seq = 0; $seq++; $base = $this->em->getRepository(Member::class)->count([]); $count = $base + $seq;
+
+        $member = new Member();
+        $member->setFirstName($firstName);
+        $member->setLastName($lastName);
+        $member->setEmail($email);
+        $member->setMemberNumber(sprintf('BIB-%d-%05d', $year, $count));
+        $member->setMembershipExpiry(new \DateTimeImmutable('+1 year'));
+        $member->setStatus(Member::STATUS_ACTIVE);
+        $this->em->persist($member);
+
+        $user = new User();
+        $user->setEmail($email);
+        $user->setRole(User::ROLE_MEMBER);
+        $user->setMember($member);
+        $user->setPasswordHash($this->hasher->hashPassword($user, $password));
+        $this->em->persist($user);
+        $output->writeln("<info>Adhérent créé : {$email}</info>");
     }
 
     private function initConfig(): void

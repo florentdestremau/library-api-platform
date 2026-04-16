@@ -1,0 +1,49 @@
+{
+    admin off
+    frankenphp
+    servers {
+        trusted_proxies static private_ranges
+    }
+}
+
+:80 {
+    log {
+        output stderr
+        format console
+        level WARN
+    }
+
+    root * /app/backend/public
+
+    # Servir le frontend SPA React (assets/index.html)
+    handle /assets/* {
+        root * /app/backend/public/app
+        file_server
+    }
+
+    handle /favicon.svg {
+        root * /app/backend/public/app
+        file_server
+    }
+
+    handle /icons.svg {
+        root * /app/backend/public/app
+        file_server
+    }
+
+    # API Symfony + health check
+    handle /api/* {
+        php_server
+    }
+
+    handle /up {
+        php_server
+    }
+
+    # Tout le reste → SPA React (index.html)
+    handle {
+        root * /app/backend/public/app
+        try_files {path} {path}/ /index.html
+        file_server
+    }
+}

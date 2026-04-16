@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
+import { isLibrarian as checkLibrarian } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
@@ -28,9 +29,9 @@ export default function Login() {
 
   async function onSubmit(values: LoginForm) {
     try {
-      await login(values)
+      const { token } = await login(values)
       toast.success('Connexion réussie')
-      if (isLibrarian) {
+      if (checkLibrarian(token)) {
         navigate('/admin')
       } else {
         navigate('/portail')

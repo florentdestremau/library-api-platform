@@ -13,6 +13,7 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use App\Dto\Input\ReservationCreateInput;
 use App\Repository\ReservationRepository;
+use App\State\Provider\MyReservationsProvider;
 use App\State\Processor\ReservationCreateProcessor;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -30,6 +31,11 @@ use Symfony\Component\Uid\Uuid;
             processor: ReservationCreateProcessor::class,
         ),
         new Delete(security: "is_granted('ROLE_LIBRARIAN') or (is_granted('ROLE_MEMBER') and object.getMember() == user.getMember())"),
+        new GetCollection(
+            uriTemplate: '/my_reservations',
+            security: "is_granted('ROLE_MEMBER')",
+            provider: MyReservationsProvider::class,
+        ),
     ],
     normalizationContext: ['groups' => ['reservation:read']],
     paginationItemsPerPage: 20,

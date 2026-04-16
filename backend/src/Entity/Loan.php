@@ -18,6 +18,7 @@ use App\Repository\LoanRepository;
 use App\State\Processor\LoanCreateProcessor;
 use App\State\Processor\LoanRenewProcessor;
 use App\State\Processor\LoanReturnProcessor;
+use App\State\Provider\MyLoansProvider;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Uid\Uuid;
@@ -44,6 +45,11 @@ use Symfony\Component\Validator\Constraints as Assert;
             uriTemplate: '/loans/{id}/renew',
             security: "is_granted('ROLE_LIBRARIAN') or is_granted('ROLE_MEMBER')",
             processor: LoanRenewProcessor::class,
+        ),
+        new GetCollection(
+            uriTemplate: '/my_loans',
+            security: "is_granted('ROLE_MEMBER')",
+            provider: MyLoansProvider::class,
         ),
     ],
     normalizationContext: ['groups' => ['loan:read']],
