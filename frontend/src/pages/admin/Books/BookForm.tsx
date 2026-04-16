@@ -15,10 +15,10 @@ import { ArrowLeft } from 'lucide-react'
 const schema = z.object({
   title: z.string().min(1, 'Requis'),
   isbn: z.string().optional(),
-  publishedYear: z.coerce.number().int().min(1000).max(2100).optional().or(z.literal('')),
+  publishedYear: z.string().optional(),
   publisher: z.string().optional(),
-  language: z.string().default('fr'),
-  pageCount: z.coerce.number().int().positive().optional().or(z.literal('')),
+  language: z.string().min(1),
+  pageCount: z.string().optional(),
   description: z.string().optional(),
 })
 
@@ -49,10 +49,10 @@ export default function BookForm() {
       form.reset({
         title: book.title,
         isbn: book.isbn ?? '',
-        publishedYear: book.publishedYear ?? '',
+        publishedYear: book.publishedYear != null ? String(book.publishedYear) : '',
         publisher: book.publisher ?? '',
         language: book.language,
-        pageCount: book.pageCount ?? '',
+        pageCount: book.pageCount != null ? String(book.pageCount) : '',
         description: book.description ?? '',
       })
     }
@@ -61,12 +61,13 @@ export default function BookForm() {
   const mutation = useMutation({
     mutationFn: (data: FormData) => {
       const payload = {
-        ...data,
+        title: data.title,
+        language: data.language,
         isbn: data.isbn || undefined,
         publisher: data.publisher || undefined,
         description: data.description || undefined,
-        publishedYear: data.publishedYear === '' ? undefined : Number(data.publishedYear),
-        pageCount: data.pageCount === '' ? undefined : Number(data.pageCount),
+        publishedYear: data.publishedYear ? parseInt(data.publishedYear) : undefined,
+        pageCount: data.pageCount ? parseInt(data.pageCount) : undefined,
       }
       return isEdit ? updateBook(id!, payload) : createBook(payload)
     },
