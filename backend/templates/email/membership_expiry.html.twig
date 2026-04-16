@@ -1,0 +1,7 @@
+{% extends 'email/base.html.twig' %}
+{% block content %}
+<h2>Votre adhésion expire bientôt</h2>
+<p>Bonjour {{ member.firstName }},</p>
+<p>Votre adhésion à {{ library_name }} expire le <strong>{{ member.membershipExpiry|date('d/m/Y') }}</strong>.</p>
+<p>Pour continuer à bénéficier de nos services, merci de renouveler votre adhésion auprès de nos bibliothécaires.</p>
+{% endblock %}

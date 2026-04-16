@@ -1,0 +1,10 @@
+{% extends 'email/base.html.twig' %}
+{% block content %}
+<h2>Renouvellement confirmé</h2>
+<p>Bonjour {{ member.firstName }},</p>
+<p>Le renouvellement de votre emprunt a été confirmé :</p>
+<div class="alert">
+    <strong>{{ loan.bookCopy.book.title }}</strong><br>
+    Nouvelle date de retour : <strong>{{ loan.dueDate|date('d/m/Y') }}</strong>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../vendor/symfony/dependency-injection/Loader/schema/services.schema.json
+
+parameters:
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+
+    App\EventListener\SqlitePragmaListener:
+        tags:
+            - { name: doctrine.event_listener, event: postConnect }

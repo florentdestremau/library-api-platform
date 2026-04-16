@@ -1,0 +1,54 @@
+security:
+    password_hashers:
+        App\Entity\User:
+            algorithm: bcrypt
+            cost: 12
+
+    providers:
+        app_users:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    firewalls:
+        dev:
+            pattern: ^/(_profiler|_wdt|assets|build)/
+            security: false
+
+        login:
+            pattern: ^/api/auth/login
+            stateless: true
+            json_login:
+                check_path: /api/auth/login
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+            provider: app_users
+
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: app_users
+            jwt: ~
+
+    role_hierarchy:
+        ROLE_LIBRARIAN: ROLE_MEMBER
+        ROLE_ADMIN: ROLE_LIBRARIAN
+        ROLE_SUPER_ADMIN: ROLE_ADMIN
+
+    access_control:
+        - { path: ^/api/auth, roles: PUBLIC_ACCESS }
+        - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+        - { path: ^/api/books, methods: [GET], roles: PUBLIC_ACCESS }
+        - { path: ^/api/genres, methods: [GET], roles: PUBLIC_ACCESS }
+        - { path: ^/api/authors, methods: [GET], roles: PUBLIC_ACCESS }
+        - { path: ^/up, roles: PUBLIC_ACCESS }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+
+when@test:
+    security:
+        password_hashers:
+            App\Entity\User:
+                algorithm: auto
+                cost: 4
+                time_cost: 3
+                memory_cost: 10

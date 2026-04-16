@@ -1,0 +1,7 @@
+{% extends 'email/base.html.twig' %}
+{% block content %}
+<h2>Réservation annulée</h2>
+<p>Bonjour {{ member.firstName }},</p>
+<p>Votre réservation pour <strong>{{ reservation.book.title }}</strong> a été annulée car le délai de retrait a expiré.</p>
+<p>Vous pouvez effectuer une nouvelle réservation si vous le souhaitez.</p>
+{% endblock %}

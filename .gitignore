@@ -1,0 +1,27 @@
+# Dépendances
+/backend/vendor/
+/frontend/node_modules/
+
+# Build
+/frontend/dist/
+
+# Données runtime
+/backend/var/cache/
+/backend/var/log/
+/backend/.env.local
+/backend/var/data.db
+/backend/var/data-test*.db
+
+# Clés JWT
+/backend/config/jwt/*.pem
+
+# Secrets
+*.env.local
+*.env.*.local
+.DS_Store
+*.swp
+*.swo
+
+# Coverage
+/backend/coverage/
+/frontend/coverage/

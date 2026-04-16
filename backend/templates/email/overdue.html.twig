@@ -1,0 +1,11 @@
+{% extends 'email/base.html.twig' %}
+{% block content %}
+<h2>Retard de retour</h2>
+<p>Bonjour {{ member.firstName }},</p>
+<div class="alert danger">
+    <strong>{{ loan.bookCopy.book.title }}</strong><br>
+    Date de retour prévue : {{ loan.dueDate|date('d/m/Y') }}<br>
+    <strong>Pénalités cumulées : {{ late_fee|number_format(2, ',', ' ') }} €</strong>
+</div>
+<p>Merci de rapporter cet ouvrage dès que possible.</p>
+{% endblock %}

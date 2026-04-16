@@ -1,0 +1,10 @@
+{% extends 'email/base.html.twig' %}
+{% block content %}
+<h2>Votre réservation est disponible !</h2>
+<p>Bonjour {{ member.firstName }},</p>
+<div class="alert">
+    <strong>{{ reservation.book.title }}</strong> est maintenant disponible.<br>
+    <strong>Délai de retrait : 48 heures</strong>
+</div>
+<p>Merci de venir récupérer cet ouvrage dans les 48 heures suivant cet email, sinon votre réservation sera annulée.</p>
+{% endblock %}

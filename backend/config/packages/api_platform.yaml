@@ -1,0 +1,25 @@
+api_platform:
+    title: 'Bibliothèque API'
+    description: 'API de gestion de bibliothèque municipale'
+    version: '1.0.0'
+    formats:
+        json: ['application/json']
+    docs_formats:
+        json: ['application/json']
+        jsonopenapi: ['application/vnd.openapi+json']
+        html: ['text/html']
+    error_formats:
+        json: ['application/json']
+    defaults:
+        stateless: true
+        pagination_items_per_page: 20
+        pagination_maximum_items_per_page: 100
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin']
+        extra_properties:
+            standard_put: true
+            rfc_7807_compliant_errors: true
+    keep_legacy_inflector: false
+    use_symfony_listeners: true
+    swagger:
+        versions: [3]

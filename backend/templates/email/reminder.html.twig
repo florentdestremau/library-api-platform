@@ -1,0 +1,11 @@
+{% extends 'email/base.html.twig' %}
+{% block content %}
+<h2>Rappel de retour</h2>
+<p>Bonjour {{ member.firstName }},</p>
+<p>Vous avez emprunté l'ouvrage suivant dont la date de retour approche :</p>
+<div class="alert">
+    <strong>{{ loan.bookCopy.book.title }}</strong><br>
+    Date de retour prévue : <strong>{{ loan.dueDate|date('d/m/Y') }}</strong>
+</div>
+<p>Merci de rapporter cet ouvrage avant la date limite pour éviter des pénalités.</p>
+{% endblock %}
