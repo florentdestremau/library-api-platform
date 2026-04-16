@@ -303,7 +303,7 @@ class Book
         return $this->copies;
     }
 
-    /** @Groups({"book:read"}) */
+    #[Groups(['book:read'])]
     public function getAvailableCopiesCount(): int
     {
         return $this->copies->filter(
@@ -311,7 +311,7 @@ class Book
         )->count();
     }
 
-    /** @Groups({"book:read"}) */
+    #[Groups(['book:read'])]
     public function getTotalCopiesCount(): int
     {
         return $this->copies->filter(
