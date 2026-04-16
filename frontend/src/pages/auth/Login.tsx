@@ -18,9 +18,15 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>
 
+const DEMO_ACCOUNTS = [
+  { label: 'Admin', username: 'admin@bibliotheque.fr', password: 'Admin1234!' },
+  { label: 'Bibliothécaire', username: 'bibliothecaire@bibliotheque.fr', password: 'Biblio1234!' },
+  { label: 'Adhérent', username: 'alice.martin@example.com', password: 'password123' },
+]
+
 export default function Login() {
   const navigate = useNavigate()
-  const { login, isLibrarian, isLoading } = useAuth()
+  const { login, isLoading } = useAuth()
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -30,6 +36,22 @@ export default function Login() {
   async function onSubmit(values: LoginForm) {
     try {
       const { token } = await login(values)
+      toast.success('Connexion réussie')
+      if (checkLibrarian(token)) {
+        navigate('/admin')
+      } else {
+        navigate('/portail')
+      }
+    } catch {
+      toast.error('Identifiants incorrects')
+    }
+  }
+
+  async function loginAs(username: string, password: string) {
+    form.setValue('username', username)
+    form.setValue('password', password)
+    try {
+      const { token } = await login({ username, password })
       toast.success('Connexion réussie')
       if (checkLibrarian(token)) {
         navigate('/admin')
@@ -85,11 +107,21 @@ export default function Login() {
               </Button>
             </form>
           </Form>
-          <div className="mt-6 p-4 bg-muted rounded-lg text-sm text-muted-foreground space-y-1">
-            <p className="font-medium">Comptes de démo :</p>
-            <p>Admin : admin@bibliotheque.fr / Admin1234!</p>
-            <p>Bibliothécaire : bibliothecaire@bibliotheque.fr / Biblio1234!</p>
-            <p>Adhérent : alice.martin@example.com / password123</p>
+          <div className="mt-6 p-4 bg-muted rounded-lg space-y-2">
+            <p className="text-xs font-medium text-muted-foreground mb-3">Comptes de démo — cliquez pour vous connecter :</p>
+            <div className="flex gap-2">
+              {DEMO_ACCOUNTS.map((account) => (
+                <button
+                  key={account.username}
+                  onClick={() => loginAs(account.username, account.password)}
+                  disabled={isLoading}
+                  className="flex-1 text-xs px-3 py-2 rounded-md border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="block font-medium">{account.label}</span>
+                  <span className="block text-muted-foreground truncate">{account.username}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
