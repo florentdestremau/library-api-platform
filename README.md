@@ -1,5 +1,8 @@
 # Bibliothèque — Application de gestion
 
+> **URL de production** : https://library-api.once.florent.cc
+> **Swagger UI** : https://library-api.once.florent.cc/api/docs
+
 Application de gestion de bibliothèque municipale. Stack : **React 19 + API Platform 3 (Symfony 7) + SQLite**.
 
 ## Prérequis de développement
@@ -106,25 +109,37 @@ L'application est déployée sur un serveur Once avec Docker.
 # Sur push sur master → ghcr.io/votre-org/library-api-platform:master
 ```
 
-### Déploiement initial
+### Déploiement initial sur le serveur Once
+
+Le serveur Once utilise **kamal-proxy** pour le routage. Les apps n'exposent pas de ports directement.
 
 ```bash
 ssh ubuntu@ssh.once.florent.cc
 
-# Première installation
-docker pull ghcr.io/votre-org/library-api-platform:master
+# Charger l'image (ou attendre que le CI la push sur GHCR)
+docker pull ghcr.io/florentdestremau/library-api-platform:master
+
+# Lancer le conteneur sur le réseau once
+mkdir -p ~/storage/library-api
 docker run -d \
-  --name library-app \
+  --name library-api-app \
   --restart unless-stopped \
-  -p 80:80 \
-  -v /storage:/storage \
+  --network once \
+  -v ~/storage/library-api:/storage \
   -e CORS_ALLOW_ORIGIN='.*' \
-  -e MAILER_DSN='smtp://...' \
-  ghcr.io/votre-org/library-api-platform:master
+  -e ADMIN_EMAIL=admin@bibliotheque.fr \
+  -e ADMIN_PASSWORD=Admin1234! \
+  ghcr.io/florentdestremau/library-api-platform:master
+
+# Enregistrer dans kamal-proxy
+docker exec once-proxy kamal-proxy deploy library-api \
+  --target library-api-app:80 \
+  --host library-api.once.florent.cc \
+  --tls \
+  --health-check-path /up
 
 # Vérification
-curl http://localhost/up
-docker logs library-app --tail 50
+curl https://library-api.once.florent.cc/up
 ```
 
 ### Mise à jour
@@ -132,14 +147,23 @@ docker logs library-app --tail 50
 ```bash
 ssh ubuntu@ssh.once.florent.cc
 
-docker pull ghcr.io/votre-org/library-api-platform:master
-docker stop library-app && docker rm library-app
+# Charger la nouvelle image
+docker pull ghcr.io/florentdestremau/library-api-platform:master
+
+# Arrêter l'ancien et démarrer le nouveau
+docker stop library-api-app && docker rm library-api-app
 docker run -d \
-  --name library-app \
+  --name library-api-app \
   --restart unless-stopped \
-  -p 80:80 \
-  -v /storage:/storage \
-  ghcr.io/votre-org/library-api-platform:master
+  --network once \
+  -v ~/storage/library-api:/storage \
+  ghcr.io/florentdestremau/library-api-platform:master
+
+# Redéployer dans kamal-proxy
+docker exec once-proxy kamal-proxy deploy library-api \
+  --target library-api-app:80 \
+  --host library-api.once.florent.cc \
+  --tls
 ```
 
 **Note** : Il y a un downtime de quelques secondes pendant le redémarrage (pas de rolling update avec Docker simple). Pour un déploiement sans coupure, utiliser Docker Swarm ou Kubernetes.
